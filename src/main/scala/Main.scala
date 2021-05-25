@@ -10,8 +10,6 @@ object Main {
       .appName("Covid")
       .master("local[*]")
       .getOrCreate()
-    //case class Covid(SNo:Int, ObservationDate:String,Province:String,
-      //               State:String,Country:String,Region:String,`Last Update`:String,Confirmed:Int,Deaths:Int,Recovered:Int)
     val covidDF = spark.read.option("header", "true").option("inferSchema","true").csv("hdfs://localhost:9000/user/cheruiyot/covid_19_data.csv")
    // covidDF.select("Province/State", "Country/Region").show(5)
    covidDF.select("*").show(15)
