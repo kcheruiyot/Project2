@@ -13,6 +13,7 @@ object Main {
     val covidDF = spark.read.option("header", "true").option("inferSchema","true").csv("hdfs://localhost:9000/user/cheruiyot/covid_19_data.csv")
    // covidDF.select("Province/State", "Country/Region").show(5)
    covidDF.select("*").show(15)
+    covidDF.select()
 
     val confirmedDF = spark.read.option("header", "true").option("inferSchema","true").csv("hdfs://localhost:9000/user/cheruiyot/time_series_covid_19_confirmed.csv")
 //confirmedDF.show(15)
