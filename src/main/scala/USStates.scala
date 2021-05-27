@@ -37,34 +37,33 @@ object USStates extends App {
     "'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Vermont', 'Washington', 'West Virginia', " +
     "'Wisconsin', 'Wyoming')"
 
-  val sqlDF = spark.sql("SELECT DISTINCT c1.`Country/Region`, c1.`Province/State`, " +
-    "c1.ObservationDate AS Start, c2.ObservationDate AS End, " +
-    "format_number(c2.Confirmed - c1.Confirmed, 0) AS Confirmed, " +
-    "format_number(c2.Deaths - c1.Deaths, 0) AS Deaths, " +
-    "format_string('%.2f%%', cast(((c2.Confirmed - c1.Confirmed) / c3.maxConfirmed) * 100 AS FLOAT)) AS ConfirmedPercent, " +
-    "format_string('%.2f%%', cast(((c2.Deaths - c1.Deaths) / c3.maxDeaths) * 100 AS FLOAT)) AS DeathPercent " +
-    "FROM covid AS c1 INNER JOIN covid AS c2 " +
-    "ON c1.`Province/State` = c2.`Province/State` " +
-    "AND add_months(c1.ObservationDate, 1) = c2.ObservationDate " +
-    "LEFT OUTER JOIN " +
-    "(SELECT `Province/State`, MAX(Confirmed) AS maxConfirmed, MAX(Deaths) AS maxDeaths " +
-    "FROM covid GROUP BY `Province/State`) AS c3 " +
-    "ON c1.`Province/State` = c3.`Province/State` " +
+  val sql2DF = spark.sql(s"SELECT DISTINCT c1.`Country/Region`, c1.`Province/State`, c1.ObservationDate AS Start, " +
+    s"c2.ObservationDate AS End, format_number(c2.Confirmed - c1.Confirmed, 0) AS Confirmed, " +
+    s"format_number(c2.Deaths - c1.Deaths, 0) AS Deaths, " +
+    s"format_string('%.2f%%', cast(((c2.Confirmed - c1.Confirmed) / c3.maxConfirmed) * 100 AS FLOAT)) " +
+    s"AS ConfirmedPercent, " +
+    s"format_string('%.2f%%', cast(((c2.Deaths - c1.Deaths) / c3.maxDeaths) * 100 AS FLOAT)) " +
+    s"AS DeathPercent " +
+    s"FROM covid AS c1 INNER JOIN covid AS c2 " +
+    s"ON c1.`Province/State` = c2.`Province/State` AND add_months(c1.ObservationDate, 1) = c2.ObservationDate " +
+    s"LEFT OUTER JOIN " +
+    s"(SELECT `Province/State`, MAX(Confirmed) AS maxConfirmed, MAX(Deaths) AS maxDeaths " +
+    s"FROM covid GROUP BY `Province/State`) AS c3 " +
+    s"ON c1.`Province/State` = c3.`Province/State` " +
     s"WHERE c1.`Country/Region` = 'US' AND c1.`Province/State` IN $states AND day(c1.ObservationDate) = 1 " +
-    "AND ((c2.Confirmed - c1.Confirmed) / c3.maxConfirmed) * 100 > 6.5 " +
+    s"AND c1.ObservationDate BETWEEN '2020-11-01' AND '2021-02-01' " +
+    s"ORDER BY c1.`Province/State`, Start")
 
-    "ORDER BY c1.`Province/State`, Start")
+  sql2DF.show(200)
 
-  sqlDF.show(280)
+  sql2DF.createOrReplaceTempView("covidStates2")
 
-  sqlDF.createOrReplaceTempView("covidStates")
-
-  val sql1DF = spark.sql("SELECT `Province/State`, COUNT(`Province/State`) AS RowCount, " +
+  val sql3DF = spark.sql("SELECT `Province/State`, COUNT(`Province/State`) AS RowCount, " +
     "format_string('%.2f%%', SUM(substring(ConfirmedPercent, 0, length(ConfirmedPercent) - 1))) AS sumConfirmedPercent, " +
     "format_string('%.2f%%', SUM(substring(DeathPercent, 0, length(DeathPercent) - 1))) AS sumDeathPercent " +
-    "FROM covidStates GROUP BY `Province/State` ORDER BY `Province/State`")
+    "FROM covidStates2 GROUP BY `Province/State` ORDER BY `Province/State`")
 
-  sql1DF.show(50)
+  sql3DF.show(50)
 
   spark.close()
 }
