@@ -9,18 +9,21 @@ object Main {
   def main(args: Array[String]): Unit = {
 
     Logger.getLogger("org").setLevel(Level.ERROR)
-    TotalCases.globalTotal()
+    //TotalCases.globalTotal()
     val spark = SparkSession
       .builder
       .appName("Covid")
       .master("local[*]")
       .getOrCreate()
-    val covidDF = spark.read.option("header", "true").option("inferSchema","true").csv("hdfs://localhost:9000/user/project2/covid_19_data.csv")
+    //val covidDF = spark.read.option("header", "true").option("inferSchema","true").csv("hdfs://localhost:9000/user/project2/covid_19_data.csv")
     // covidDF.select("Province/State", "Country/Region").show(5)
-    covidDF.select("*").show(15)
-    covidDF.select()
+    //covidDF.select("*").show(15)
+    //covidDF.select()
 
-    val confirmedDF = spark.read.option("header", "true").option("inferSchema","true").csv("hdfs://localhost:9000/user/project2/time_series_covid_19_confirmed.csv")
+    //Deaths.deathTrend()
+    Deaths.CaseFatalityRate()
+
+    //val confirmedDF = spark.read.option("header", "true").option("inferSchema","true").csv("hdfs://localhost:9000/user/project2/time_series_covid_19_confirmed.csv")
     //confirmedDF.show(15)
 
   }

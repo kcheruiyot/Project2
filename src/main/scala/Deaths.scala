@@ -33,7 +33,29 @@ object Deaths {
 
     val deathDF6 = spark.sql("SELECT ObservationDate, Country, Deaths, MonthlyPerChange FROM globalDeath5")
     deathDF6.show()
+    spark.close()
 
 
+  }
+  def CaseFatalityRate(): Unit = {
+    // proportion of deaths from a certain disease compared to the total number of people diagnosed with disease
+    val spark = SparkSession
+      .builder
+      .appName("Covid")
+      .master("local[*]")
+      .getOrCreate()
+
+    val fatalDF = spark.read.option("header", "true").option("inferSchema", "true").csv("hdfs://localhost:9000/user/sadcat/project2/covid_19_data.csv")
+
+    val endMonth = "('01/31/2020', '02/29/2020', '03/31/2020', '04/30/2020', '05/31/2020', '06/30/2020', '07/31/2020', '08/31/2020', '09/30/2020', '10/31/2020', '11/30/2020', '12/31/2020', '1/31/2021', '2/28/2021', '3/31/2021', '4/30/21')"
+    fatalDF.createOrReplaceTempView("fatal")
+    //spark.sql("SELECT * FROM fatal").show()
+
+    val fatalDF2 = spark.sql(s"SELECT ObservationDate, `Country/Region` as Country, SUM(Confirmed) AS Confirmed, SUM(Deaths) AS Deaths FROM fatal WHERE ObservationDate IN $endMonth GROUP BY `Country/Region`, ObservationDate ORDER BY Country ASC, Confirmed")
+
+    val casefatalityrate = udf((x: Double, y: Double) => (y/x) * 100)
+    val fatalDF3 = fatalDF2.withColumn("Case-Fatality Rate", casefatalityrate(fatalDF2("Confirmed"), fatalDF2("Deaths")))
+
+    fatalDF3.show()
   }
 }
