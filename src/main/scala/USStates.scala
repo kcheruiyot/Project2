@@ -51,9 +51,20 @@ object USStates extends App {
     "FROM covid GROUP BY `Province/State`) AS c3 " +
     "ON c1.`Province/State` = c3.`Province/State` " +
     s"WHERE c1.`Country/Region` = 'US' AND c1.`Province/State` IN $states AND day(c1.ObservationDate) = 1 " +
-    s"ORDER BY c1.`Province/State`, Start")
+    "AND ((c2.Confirmed - c1.Confirmed) / c3.maxConfirmed) * 100 > 6.5 " +
 
-  sqlDF.show(700)
+    "ORDER BY c1.`Province/State`, Start")
+
+  sqlDF.show(280)
+
+  sqlDF.createOrReplaceTempView("covidStates")
+
+  val sql1DF = spark.sql("SELECT `Province/State`, COUNT(`Province/State`) AS RowCount, " +
+    "format_string('%.2f%%', SUM(substring(ConfirmedPercent, 0, length(ConfirmedPercent) - 1))) AS sumConfirmedPercent, " +
+    "format_string('%.2f%%', SUM(substring(DeathPercent, 0, length(DeathPercent) - 1))) AS sumDeathPercent " +
+    "FROM covidStates GROUP BY `Province/State` ORDER BY `Province/State`")
+
+  sql1DF.show(50)
 
   spark.close()
 }
