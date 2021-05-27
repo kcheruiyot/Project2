@@ -1,8 +1,13 @@
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
+
+import scala.collection.mutable.ArrayBuffer
+
 
 object Main {
   def main(args: Array[String]): Unit = {
+
     Logger.getLogger("org").setLevel(Level.ERROR)
     TotalCases.globalTotal()
     val spark = SparkSession
