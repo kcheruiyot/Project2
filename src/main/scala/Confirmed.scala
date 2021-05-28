@@ -10,7 +10,7 @@ object Confirmed {
       .appName("Covid")
       .master("local[*]")
       .getOrCreate()
-    val confirmedDF = spark.read.option("header", "true").option("inferSchema", "true").csv("hdfs://localhost:9000/user/sadcat/project2/time_series_covid_19_confirmed.csv")
+    val confirmedDF = spark.read.option("header", "true").option("inferSchema", "true").csv("hdfs://localhost:9000/user/project2/time_series_covid_19_confirmed.csv")
 
     // Months to work with.
     val datesJan20 = confirmedDF.columns.slice(4, 14).toSeq

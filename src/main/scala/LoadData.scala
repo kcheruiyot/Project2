@@ -25,19 +25,17 @@ def covidGlobal():DataFrame = {
   }
   def covidGlobalRecovered():DataFrame = {
     val covid = spark.read.option("header", "true").option("inferSchema","true").csv("hdfs://localhost:9000/user/project2/time_series_covid_19_recovered.csv")
-    spark.close()
     covid
   }
 
 
-  def covidUSConfirmed():DataFrame = {
+  def covidConfirmedUS():DataFrame = {
     val covid = spark.read.option("header", "true").option("inferSchema","true").csv("hdfs://localhost:9000/user/project2/time_series_covid_19_confirmed_US.csv")
-    spark.close()
+
     covid
   }
-  def covidUSRecovered():DataFrame = {
-    val covid = spark.read.option("header", "true").option("inferSchema","true").csv("hdfs://localhost:9000/user/project2/time_series_covid_19_recovered_US.csv")
-    spark.close()
+  def covidDeathsUS():DataFrame = {
+    val covid = spark.read.option("header", "true").option("inferSchema","true").csv("hdfs://localhost:9000/user/project2/time_series_covid_19_deaths_US.csv")
     covid
   }
 

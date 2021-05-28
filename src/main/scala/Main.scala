@@ -9,7 +9,6 @@ object Main {
   def main(args: Array[String]): Unit = {
 
     Logger.getLogger("org").setLevel(Level.ERROR)
-    //TotalCases.globalTotal()
     val spark = SparkSession
       .builder
       .appName("Covid")
@@ -21,7 +20,7 @@ object Main {
     //covidDF.select()
 
     //Deaths.deathTrend()
-    Deaths.CaseFatalityRate()
+   Deaths.CaseFatalityRate()
 
     //val confirmedDF = spark.read.option("header", "true").option("inferSchema","true").csv("hdfs://localhost:9000/user/project2/time_series_covid_19_confirmed.csv")
     //confirmedDF.show(15)

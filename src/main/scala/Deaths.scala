@@ -18,7 +18,7 @@ object Deaths {
     val endMonth = "('01/31/2020', '02/29/2020', '03/31/2020', '04/30/2020', '05/31/2020', '06/30/2020', '07/31/2020', '08/31/2020', '09/30/2020', '10/31/2020', '11/30/2020', '12/31/2020')"
     val deathrate = udf((x: Double, y: Double) => ((x - y)/y)*100)
 
-    val deathDF = spark.read.option("header", "true").option("inferSchema", "true").csv("hdfs://localhost:9000/user/sadcat/project2/covid_19_data.csv")
+    val deathDF = spark.read.option("header", "true").option("inferSchema", "true").csv("hdfs://localhost:9000/user/project2/covid_19_data.csv")
     deathDF.createOrReplaceTempView("globalDeath")
     val deathDF2 = spark.sql(s"SELECT ObservationDate, `Country/Region` as Country, SUM(Deaths) AS Deaths FROM globalDeath WHERE ObservationDate IN $endMonth GROUP BY `Country/Region`, ObservationDate ORDER BY Country ASC, ObservationDate")
     deathDF2.createOrReplaceTempView("globalDeath2")
@@ -48,7 +48,7 @@ object Deaths {
     val endMonth = "('01/31/2020', '02/29/2020', '03/31/2020', '04/30/2020', '05/31/2020', '06/30/2020', '07/31/2020', '08/31/2020', '09/30/2020', '10/31/2020', '11/30/2020', '12/31/2020')"
     val casefatalityrate = udf((x: Double, y: Double) => (y/x) * 100)
 
-    val fatalDF = spark.read.option("header", "true").option("inferSchema", "true").csv("hdfs://localhost:9000/user/sadcat/project2/covid_19_data.csv")
+    val fatalDF = spark.read.option("header", "true").option("inferSchema", "true").csv("hdfs://localhost:9000/user/project2/covid_19_data.csv")
     fatalDF.createOrReplaceTempView("fatal")
     val fatalDF2 = spark.sql(s"SELECT ObservationDate, `Country/Region` as Country, SUM(Confirmed) AS Confirmed, SUM(Deaths) AS Deaths FROM fatal WHERE ObservationDate IN $endMonth GROUP BY `Country/Region`, ObservationDate ORDER BY Country, ObservationDate")
     val fatalDF3 = fatalDF2.withColumn("Case-Fatality Rate", casefatalityrate(fatalDF2("Confirmed"), fatalDF2("Deaths")))
