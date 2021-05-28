@@ -1,0 +1,14 @@
+Trend is there any coorelation to the distribution of the vaccine to the number of confirmed cases and deaths.
+
+The wide spread distribution ofthe vaccine began in December of 2020.
+
+After looking at the complete dataset for each individual state. I decided to concentrate on the time period of Noveber 1, 2020 until March 1, 2021.
+
+From this I could see that most of the covid confirmed cases were from this time period.
+
+I examined the percent of total confirmed cases and percent of total deaths.
+
+From this I was able to determine that for all the states the confirmed case fell between 40% and 70% for this period of four months.
+
+To whom it may concern:
+The data definetly shows that the number of confirmed cases of Covid-19 in the US States occured around the time that the vaccines were made available to the citizens of the USA.
