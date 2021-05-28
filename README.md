@@ -42,7 +42,8 @@ GitHub clone URL: `https://github.com/kcheruiyot/Project2.git`
     - `~HADOOP_HOME/sbin/start-dfs.sh`
     - `~HADOOP_HOME/sbin/start-yarn.sh`  
     - `cd`
-    - `mkdir /user/project2`
+    - `hdfs dfs -mkdir /user/project2`
+    - `hdfs dfs -chmod 777 /user/project2`  
     - `hdfs dfs -cp /mnt/<path to data files>/covid_19_data.csv /user/project2/covid_19_data.csv`
     - `hdfs dfs -cp /mnt/<path to data files>/time_series_covid_19_confirmed.csv /user/project2/time_series_covid_19_confirmed.csv`
     - `hdfs dfs -cp /mnt/<path to data files>/time_series_covid_19_confirmed_US.csv /user/project2/time_series_covid_19_confirmed_US.csv`

@@ -1,5 +1,5 @@
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{SaveMode, SparkSession}
 import org.apache.spark.sql.types._
 
 
@@ -58,12 +58,18 @@ object USStates extends App {
 
   sql2DF.createOrReplaceTempView("covidStates2")
 
+  sql2DF.write.mode(SaveMode.Overwrite).partitionBy("Start").format("parquet")
+    .save("hdfs://localhost:9000/user/project2/usstatesdata.parquet")
+
   val sql3DF = spark.sql("SELECT `Province/State`, COUNT(`Province/State`) AS RowCount, " +
     "format_string('%.2f%%', SUM(substring(ConfirmedPercent, 0, length(ConfirmedPercent) - 1))) AS sumConfirmedPercent, " +
     "format_string('%.2f%%', SUM(substring(DeathPercent, 0, length(DeathPercent) - 1))) AS sumDeathPercent " +
     "FROM covidStates2 GROUP BY `Province/State` ORDER BY `Province/State`")
 
   sql3DF.show(50)
+
+  sql3DF.write.mode(SaveMode.Overwrite).format("parquet")
+    .save("hdfs://localhost:9000/user/project2/usstatespercent.parquet")
 
   spark.close()
 }
