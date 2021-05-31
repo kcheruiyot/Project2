@@ -59,6 +59,6 @@ GitHub clone URL: `https://github.com/kcheruiyot/Project2.git`
 - [Gary Larson](https://github.com/gary-larson)
 - [Robert Cheruiyot](https://github.com/kcheruiyot)
 - [Moses Lin](https://github.com/Moses-Lin)
-- 
+ 
 ## License
 This project uses the following license: <license_name>.
