@@ -1,70 +1,102 @@
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import org.apache.spark.sql.functions.{col, max, udf, when}
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.{col, desc, when}
 
-import scala.collection.mutable.ArrayBuffer
 import scala.io.StdIn
 
-object Deaths extends App {
+object Deaths {
 
-  def MonthlyDeathPerChange(): Unit = {
-    // % change of number of deaths per month
-    val spark = SparkSession
-      .builder
-      .appName("Covid")
-      .master("local[*]")
-      .getOrCreate()
+  val spark = SparkSession
+    .builder
+    .appName("Covid")
+    .master("local[*]")
+    .getOrCreate()
 
-    // Defining some values for use
-    val endMonth = "('01/31/2020', '02/29/2020', '03/31/2020', '04/30/2020', '05/31/2020', '06/30/2020', '07/31/2020', '08/31/2020', '09/30/2020', '10/31/2020', '11/30/2020', '12/31/2020')"
-    val deathrate = udf{(x: Double, y: Double) => ((x - y)/y)*100}
+  val endMonth = "('01/31/2020', '02/29/2020', '03/31/2020', '04/30/2020', '05/31/2020', '06/30/2020', '07/31/2020', '08/31/2020', '09/30/2020', '10/31/2020', '11/30/2020', '12/31/2020')"
 
-    val deathDF = spark.read.option("header", "true").option("inferSchema", "true").csv("hdfs://localhost:9000/user/project2/covid_19_data.csv")
-    deathDF.createOrReplaceTempView("globalDeath")
-    val deathDF2 = spark.sql(s"SELECT ObservationDate, `Country/Region` as Country, SUM(Deaths) AS Deaths FROM globalDeath WHERE ObservationDate IN $endMonth GROUP BY `Country/Region`, ObservationDate ORDER BY Country ASC, ObservationDate")
-    deathDF2.createOrReplaceTempView("globalDeath2")
-    val deathDF3 = spark.sql("SELECT *, LAG(Deaths) OVER (PARTITION BY Country ORDER BY Country) AS PrevMonthDeaths FROM globalDeath2 ORDER BY Country, ObservationDate")
-    val deathDF4 = deathDF3.withColumn("MonthlyDeathPerChange", deathrate(deathDF3("Deaths"), deathDF3("PrevMonthDeaths")))
-    val deathDF5 = deathDF4.withColumn("MonthlyDeathPerChange", when(col("MonthlyDeathPerChange")
-      .isin(Double.PositiveInfinity) or col("MonthlyDeathPerChange").isNull, "N/A").otherwise(col("MonthlyDeathPerChange")))
-    deathDF5.createOrReplaceTempView("globalDeath5")
-    val deathDF6 = spark.sql("SELECT ObservationDate, Country, Deaths, MonthlyDeathPerChange FROM globalDeath5")
-    deathDF6.createOrReplaceTempView("globalDeath6")
+  def MostDeaths(): Unit = {
 
-    val CountryName = StdIn.readLine("Which Country would you like to view?    ")
-    spark.sql(s"SELECT * FROM globalDeath6 WHERE Country = '$CountryName'").show()
+    val deadDF = spark.read.option("header", "true").option("inferSchema", "true")
+      .csv("hdfs://localhost:9000/user/project2/covid_19_data.csv")
+    deadDF.createOrReplaceTempView("globalDeath")
+
+    spark.sql("SELECT `Country/Region` AS Country, MAX(Deaths) AS Deaths" +
+      " FROM globalDeath GROUP BY `Country/Region` ORDER BY Deaths DESC").show(50)
 
     spark.close()
-
   }
-  def CaseFatalityRate(): Unit = {
-    // proportion of deaths from a certain disease compared to the total number of people diagnosed with disease
-    val spark = SparkSession
-      .builder
-      .appName("Covid")
-      .master("local[*]")
-      .getOrCreate()
 
-    // Defining some values for use
-    val endMonth = "('01/31/2020', '02/29/2020', '03/31/2020', '04/30/2020', '05/31/2020', '06/30/2020', '07/31/2020', '08/31/2020', '09/30/2020', '10/31/2020', '11/30/2020', '12/31/2020')"
-    val casefatalityrate = udf{(x: Double, y: Double) =>
-        if (x == 0.0 ) 0.0
-        else (y/x) * 100}
+  def AvgCaseFatalityRateInc(): Unit = {
 
-    val fatalDF = spark.read.option("header", "true").option("inferSchema", "true").csv("hdfs://localhost:9000/user/project2/covid_19_data.csv")
+    // shows the top 20 countries with highest average monthly case fatality rates.
+
+    val fatalDF = spark.read.option("header", "true").option("inferSchema", "true")
+      .csv("hdfs://localhost:9000/user/project2/covid_19_data.csv")
     fatalDF.createOrReplaceTempView("fatal")
-    val fatalDF2 = spark.sql(s"SELECT ObservationDate, `Country/Region` as Country, SUM(Confirmed) AS Confirmed, SUM(Deaths) AS Deaths FROM fatal WHERE ObservationDate IN $endMonth GROUP BY `Country/Region`, ObservationDate ORDER BY Country, ObservationDate")
-    val fatalDF3 = fatalDF2.withColumn("CaseFatalityRate", casefatalityrate(fatalDF2("Confirmed"), fatalDF2("Deaths")))
-    fatalDF3.createOrReplaceTempView("fatal3")
 
-    //val CountryName = StdIn.readLine("Which Country would you like to view?    ")
-    //spark.sql(s"SELECT * FROM fatal3 WHERE Country = '$CountryName'").show()
-    //spark.close()
+    val fatalDF2 = spark.sql(s"SELECT ObservationDate, `Country/Region` as Country, SUM(Confirmed) AS Confirmed, " +
+      s"SUM(Deaths) AS Deaths FROM fatal WHERE ObservationDate IN $endMonth GROUP BY `Country/Region`, ObservationDate " +
+      s"ORDER BY Country, ObservationDate")
+    fatalDF2.createOrReplaceTempView("fatal2")
 
-    fatalDF3.show()
-    //fatalDF4.select("CaseFatalityRate").filter(col("ObservationDate") === "02/29/2020").show()
-    //spark.sql("SELECT ObservationDate, AVG(CaseFatalityRate) AS Rate FROM fatal3 GROUP BY ObservationDate").show()
+    val fatalDF3 = spark.sql("SELECT ObservationDate, Country, Confirmed, Deaths, " +
+      "format_number((Deaths / Confirmed) * 100, 2) AS CaseFatalityRate FROM fatal2 " +
+      "ORDER BY Country, ObservationDate")
 
+    val fatalDF4 = fatalDF3.withColumn("CaseFatalityRate", when(col("CaseFatalityRate")
+      .isNull, 0.0: Double).otherwise(col("CaseFatalityRate").cast("Double")))
+    fatalDF4.createOrReplaceTempView("fatal4")
 
+    val fatalDF5 = spark.sql("SELECT ObservationDate, Country, " +
+      "Confirmed, LAG(Confirmed) OVER (PARTITION BY Country ORDER BY Country) AS ConfirmedB4, " +
+      "Deaths, LAG(Deaths) OVER (PARTITION BY Country ORDER BY Country) AS DeathsB4, " +
+      "CaseFatalityRate, LAG(CaseFatalityRate) OVER (PARTITION BY Country ORDER BY Country) AS CFRB4 " +
+      "FROM fatal4 ORDER BY Country, ObservationDate").na.fill(0.0:Double)
+    fatalDF5.createOrReplaceTempView("fatal5")
+
+    val fatalDF6 = spark.sql("SELECT ObservationDate, Country, " +
+      "(Confirmed - ConfirmedB4) AS ConfirmedIncFromPrevMonth, " +
+      "(Deaths - DeathsB4) AS DeathsIncFromPrevMonth, " +
+      "(CaseFatalityRate - CFRB4) AS CFRIncFromPrevMonth " +
+      "FROM fatal5 ORDER BY Country, ObservationDate")
+    fatalDF6.createOrReplaceTempView("fatal6")
+
+    spark.sql("SELECT Country AS `Country Name`, " +
+      "COUNT(ObservationDate) AS `Num Of Observations`, " +
+      "format_number(AVG(ConfirmedIncFromPrevMonth), 0) AS `AVG Confirmed Inc Per Month in 2020`, " +
+      "format_number(AVG(DeathsIncFromPrevMonth), 0) AS `AVG Deaths Inc Per Month in 2020`, " +
+      "format_string('%.2f %%', AVG(CFRIncFromPrevMonth)) AS `AVG CFR Inc Per Month in 2020`" +
+      "FROM fatal6 GROUP BY `Country Name` ORDER BY `AVG CFR Inc Per Month in 2020` DESC").show()
+
+    spark.close()
+  }
+
+  def CaseFatalityRate(): Unit = {
+
+    // Shows the top 20 countries with highest case fatality rate.
+
+    val avgfatalDF = spark.read.option("header", "true").option("inferSchema", "true")
+      .csv("hdfs://localhost:9000/user/project2/covid_19_data.csv")
+    avgfatalDF.createOrReplaceTempView("avgfatal")
+
+    val avgfatalDF2 = spark.sql("SELECT `Country/Region` AS Country, MAX(Confirmed) AS Confirmed, MAX(Deaths) " +
+      "AS Deaths FROM avgfatal GROUP BY `Country/Region` ORDER BY Deaths DESC")
+    avgfatalDF2.createOrReplaceTempView("avgfatal2")
+
+    val avgfatalDF3 = spark.sql("SELECT Country, Confirmed, Deaths, " +
+      "format_string('%.2f %%', cast((Deaths / Confirmed) * 100 AS FLOAT)) AS CaseFatalityRate FROM avgfatal2 " +
+      "ORDER BY CaseFatalityRate DESC")
+
+    val avgfatalDF4 = avgfatalDF3.withColumn("CaseFatalityRate", when(col("CaseFatalityRate")
+      .equalTo("nu %"), "0.00 %").otherwise(col("CaseFatalityRate")))
+      .orderBy(desc("CaseFatalityRate"))
+    avgfatalDF4.createOrReplaceTempView("avgfatal4")
+
+    spark.sql("SELECT Country AS `Country Name`, " +
+      "Confirmed AS `Total Confirmed Cases in 2020`, " +
+      "Deaths AS `Total Deaths in 2020`, " +
+      "CaseFatalityRate AS `2020 Case Fatality Rate` " +
+      "FROM avgfatal4 ORDER BY `2020 Case Fatality Rate` DESC").show()
+
+    spark.close()
   }
 }
