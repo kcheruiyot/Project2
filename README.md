@@ -58,6 +58,7 @@ GitHub clone URL: `https://github.com/kcheruiyot/Project2.git`
 ## Contributors
 - [Gary Larson](https://github.com/gary-larson)
 - [Robert Cheruiyot](https://github.com/kcheruiyot)
-> Todo add your name and link
+- [Moses Lin](https://github.com/Moses-Lin)
+- 
 ## License
 This project uses the following license: <license_name>.
