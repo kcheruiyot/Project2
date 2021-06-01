@@ -1,8 +1,4 @@
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
-
-import scala.collection.mutable.ArrayBuffer
 
 
 object Main {

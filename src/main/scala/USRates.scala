@@ -1,3 +1,4 @@
+import LoadData.spark
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.functions.{col, desc, round, sum}
@@ -10,11 +11,14 @@ object USRates extends App {
 
   val confirmed = usConfirmed.select("Admin2", "Province_State", "5/2/21")
     .withColumnRenamed("5/2/21", "Confirmed")
+  val broadCastConfirmed = spark.sparkContext.broadcast(confirmed)
+  val confirmedFromBroadcast = broadCastConfirmed.value
   val deaths = usDeaths.select("Admin2", "Population", "Province_State", "5/2/21")
     .withColumnRenamed("5/2/21", "Deaths")
 
-  val confirmedDeaths = confirmed.join(deaths, usingColumns = Seq("Province_State", "Admin2"))
+  val confirmedDeaths = confirmedFromBroadcast.join(deaths, usingColumns = Seq("Province_State", "Admin2"))
     .select("Province_State", "Admin2", "Population", "Confirmed", "Deaths")
+
   confirmedDeaths.cache()
 
   val stateAndCountryRates = confirmedDeaths.withColumn("Morbidity (Cases Per 10000)", round(col("Confirmed") / col("Population") * 10000, 3))
@@ -28,10 +32,10 @@ object USRates extends App {
     .withColumn("Mortality (Cases Per 10000)", round(col("Deaths") / col("Population") * 10000, 3))
     .orderBy(desc("Mortality (Cases Per 10000)"))
 
-  //stateAndCountryRates.show()
+  stateAndCountryRates.show()
   statesRates.show()
-  statesRates.coalesce(1).write.mode(SaveMode.Overwrite).option("header",true).format("csv")
+  statesRates.coalesce(1).write.mode(SaveMode.Overwrite).option("header",value = true).format("csv")
     .save("hdfs://localhost:9000/user/project2/usRates.csv")
-//  spark.close()
+spark.close()
 
 }
