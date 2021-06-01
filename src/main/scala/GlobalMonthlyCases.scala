@@ -1,6 +1,6 @@
 import LoadData.spark
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.functions.{col, udf}
+import org.apache.spark.sql.functions.{col, sum, udf}
 object GlobalMonthlyCases extends App {
   Logger.getLogger("org").setLevel(Level.ERROR)
 
@@ -12,10 +12,13 @@ object GlobalMonthlyCases extends App {
   total.createTempView("global_cases")
 
   val cumulativeTotal = spark.sql(s"SELECT ObservationDate, `Country/Region` as Country, SUM(Confirmed) as Confirmed FROM global_cases WHERE  ObservationDate IN $endMonth GROUP BY `Country/Region`, ObservationDate ORDER BY Country DESC, Confirmed")
-  cumulativeTotal.createTempView("cummulativeTotal")
-  val monthlyTotal = spark.sql("SELECT ObservationDate, Country, Confirmed, Confirmed - lag(Confirmed) OVER (ORDER BY Confirmed) as Monthly FROM cummulativeTotal")
+  cumulativeTotal.createTempView("cumulativeTotal")
+  val monthlyTotal = spark.sql("SELECT ObservationDate, Country, Confirmed, Confirmed - lag(Confirmed) OVER (ORDER BY Confirmed) as Monthly FROM cumulativeTotal")
   monthlyTotal.createTempView("monthlyTotal")
-
+ // println("Total By Country")
+//spark.sql("SELECT Country, Confirmed AS  `Total (5/2/21)" +
+//  "` FROM cumulativeTotal WHERE ObservationDate = '05/02/2021' ORDER BY `Total (5/2/21)` DESC").show()
+//  val globalTotal = spark.sql("SELECT SUM(Confirmed) FROM cumulativeTotal WHERE ObservationDate = '05/02/2021'").show()
   val maxMonth = spark.sql("SELECT Country, MAX(Monthly) as `Max` FROM monthlyTotal GROUP BY Country ORDER BY `Max` DESC")
   maxMonth.createTempView("maxMonthly")
   def toMMM  = udf((str:String) => {
@@ -45,12 +48,19 @@ object GlobalMonthlyCases extends App {
   spark.udf.register("toMMM",toMMM)
   val monthlyCases = spark.sql("SELECT a.Country AS COUNTRY, a.ObservationDate AS `Month`, a.Monthly AS `TOTAL CASES` FROM monthlyTotal AS a" +
     " INNER JOIN maxMonthly AS b ON (a.Country=b.Country AND a.Monthly=b.Max) ORDER BY MONTHLY DESC")
-    .withColumn("MMM",toMMM(col("Month")))
+    .withColumn("MMM",toMMM(col("Month"))).dropDuplicates("COUNTRY")
 
   monthlyCases.createTempView("monthlyCases")
 
-  println("Table showing the month each country peaked in covid cases")
+  //println("Table showing the month each country peaked in covid cases")
 
-  spark.sql("SELECT COUNTRY, MMM AS MONTH, `TOTAL CASES` FROM monthlyCases").show(250)
+//spark.sql("SELECT COUNTRY, MMM AS MONTH, `TOTAL CASES` FROM monthlyCases ORDER BY `TOTAL CASES` DESC").show(250)
+  println("Months When Countries Peaked in Covid Cases")
+  spark.sql("SELECT MMM AS MONTH, COUNT(MMM) AS `NUMBER OF COUNTRIES` " +
+    "FROM monthlyCases GROUP BY MMM ORDER BY `NUMBER OF COUNTRIES` DESC").show()
+
+  spark.sql("SELECT COUNT(MMM) AS `NUMBER OF COUNTRIES` " +
+    "FROM monthlyCases ORDER BY `NUMBER OF COUNTRIES` DESC").show()
+
 spark.close()
 }

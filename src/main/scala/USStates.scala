@@ -3,6 +3,7 @@ import org.apache.spark.sql.{SaveMode, SparkSession}
 import org.apache.spark.sql.types._
 
 
+
 object USStates extends App {
 
   Logger.getLogger("org").setLevel(Level.ERROR)

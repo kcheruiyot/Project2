@@ -8,9 +8,7 @@ object LoadData {
     .master("local[*]")
     .getOrCreate()
 def covidGlobal():DataFrame = {
-  val covid = spark.read.option("header", "true").option("inferSchema","true").csv("hdfs://localhost:9000/user/project2/covid_19_data.csv")
-
-  covid
+  spark.read.option("header", "true").option("inferSchema","true").csv("hdfs://localhost:9000/user/project2/covid_19_data.csv")
 }
 
   def covidGlobalDeaths():DataFrame = {
@@ -38,5 +36,5 @@ def covidGlobal():DataFrame = {
     val covid = spark.read.option("header", "true").option("inferSchema","true").csv("hdfs://localhost:9000/user/project2/time_series_covid_19_deaths_US.csv")
     covid
   }
-
+//spark.close()
 }

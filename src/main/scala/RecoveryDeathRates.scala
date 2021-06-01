@@ -1,7 +1,5 @@
 import LoadData.spark
-import RecoveryDeathRates.{aggregateRecovery, casesByCountry}
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.IntegerType
 object RecoveryDeathRates extends App {
@@ -35,4 +33,5 @@ object RecoveryDeathRates extends App {
   rates.withColumn("Recovery Rate", addPercent(col("Recovery Rate")))
     .withColumn("Death Rate", addPercent(col("Death Rate")))
     .orderBy(desc("Recovery Rate")).show(25)
+  spark.close()
 }
