@@ -34,7 +34,7 @@ object USRates extends App {
 
   stateAndCountryRates.show()
   statesRates.show()
-  statesRates.coalesce(1).write.mode(SaveMode.Overwrite).option("header",value = true).format("csv")
+  statesRates.coalesce(1).write.mode(SaveMode.Overwrite).option("header",true).format("csv")
     .save("hdfs://localhost:9000/user/project2/usRates.csv")
 spark.close()
 
